@@ -31,6 +31,12 @@ namespace Stylization {
         if(vertices[i].x == Data::image_width && vertices[i].y == Data::image_height) return true;
         return false;
     }
+    inline bool isBorder (int i) {
+        if(vertices[i].x == 0 || vertices[i].y == 0) return true;
+        if(vertices[i].x == Data::image_width
+        || vertices[i].y == Data::image_height) return true;
+        return false;
+    }
     inline void chainInsertElement (int position, short value) {
         if(connections[position].value < 0) {
             connections[position].value = value;
@@ -74,7 +80,9 @@ namespace Stylization {
             pre = &chain_nodes[cur];
             cur = chain_nodes[cur].next;
         }
+        // Report a bug.
         fatal("Ah sure I'm f**ked.");
+        // *1 *2 *3 *4 *5 *6 *7 *8 *9 *10 *11 *12 *13 *14 *15 *16 *17, a total of 17 bugs fixed.
     }
     inline void chainPurge (int position) {
         int cur = connections[position].next;
@@ -134,6 +142,13 @@ namespace Stylization {
         triangles[index].t &= ~F_TRIANGLE_VALID;
         mem_triangles.push(index);
     }
+
+    inline int numTriangles () {
+        return triangles.size()-mem_triangles.size();
+    }
+    inline int numVertices () {
+        return vertices.size()-mem_vertices.size();
+    }
     
     // Split a triangle by inserting a new vertice at the centroid of the triangle
     bool splitTriangle (int index) {
@@ -164,18 +179,43 @@ namespace Stylization {
         return true;
     }
     // Collapse a triangle by merging vertices connected by its shortest edge
+    // Special case when collapsing a triangle which has an edge overlaps the
+    // image border
     bool collapseTriangle (int index) {
         if(!validTriangle(index)) return false;
         int a = triangles[index].v[0];
         int b = triangles[index].v[1];
         int c = triangles[index].v[2];
+        if((isBorder(a) && isBorder(b))
+        || (isBorder(b) && isBorder(c))
+        || (isBorder(c) && isBorder(a))) {
+            // Special handeling, collapse the vertice onto the border
+            if(isBorder(b) && isBorder(c)) std::swap(a, c);
+            if(isBorder(a) && isBorder(c)) std::swap(b, c);
+            //printf("collapse:(%f, %f), (%f, %f)\b", vertices[a].x, vertices[a].y, vertices[b].x, vertices[b].y);
+            chainRemoveElement(a, index);
+            chainRemoveElement(b, index);
+            chainRemoveElement(c, index);
+            eraseTriangle(index);
+            if(vertices[a].x == 0 && vertices[b].x == 0) 
+                vertices[c].x = 0;
+            else if(vertices[a].x == Data::image_width
+                 && vertices[b].x == Data::image_width)
+                vertices[c].x = Data::image_width;
+            else if(vertices[a].y == 0 && vertices[b].y == 0)
+                vertices[c].y = 0;
+            else vertices[c].y = Data::image_height;
+            // It is possible for some vertice to be "totally dead" here
+            // We need to get rid of them.
+            if(connections[a].value == -1) eraseVertice(a);
+            if(connections[b].value == -1) eraseVertice(b);
+            if(connections[c].value == -1) eraseVertice(c);
+            return true;
+        }
         Float l0, l1, l2;
         l0 = (vertices[a]-vertices[b]).lengthSquared();
         l1 = (vertices[b]-vertices[c]).lengthSquared();
         l2 = (vertices[c]-vertices[a]).lengthSquared();
-        if(isStatic(a) && isStatic(b)) l0 = Infinity;
-        if(isStatic(b) && isStatic(c)) l1 = Infinity;
-        if(isStatic(c) && isStatic(a)) l2 = Infinity;
         std::function<void(int, int, int)> modify = [] (int tr, int x, int y) {
             if(triangles[tr].v[0] == y) triangles[tr].v[0] = x;
             if(triangles[tr].v[1] == y) triangles[tr].v[1] = x;
@@ -208,9 +248,9 @@ namespace Stylization {
             } else chainInsertElement(x, tr);
         };
         std::function<void(int, int)> operate = [&modify] (int x, int y) {
-            printf("collapse:%lf\n", sqrt((vertices[x]-vertices[y]).lengthSquared()));
-            if(isStatic(y)) std::swap(x, y);
-            assert(!isStatic(y));
+            //printf("collapse:%lf\n", sqrt((vertices[x]-vertices[y]).lengthSquared()));
+            if(isBorder(y)) std::swap(x, y);
+            assert(!isBorder(y));
             int cur = connections[y].next;
             int tr = connections[y].value;
             // merge b to a
@@ -308,13 +348,11 @@ namespace Stylization {
         // for more detailed infomation.
         Float ret = 0;
         int cur = connections[index].next;
-        ret += func(connections[index].value);
+        if(connections[index].value > 0)
+            ret += func(connections[index].value);
         while(cur >= 0) {
             ret += func(chain_nodes[cur].value);
             cur = chain_nodes[cur].next;
-        }
-        if(ret > 1e10) {
-            fatal("too big!");
         }
         Float sum = 0;
         cur = connections[index].next;
@@ -363,13 +401,13 @@ namespace Stylization {
             for(int i = L; i<=R; i++) {
                 if(!validVertice(i)) continue ;
                 Vector2 dx0, dx1;
-                dx0 = Data::clamp(vertices[i] - Data::delta*Vector2(1, 0));
-                dx1 = Data::clamp(vertices[i] + Data::delta*Vector2(1, 0));
+                dx0 = Data::clampInside(vertices[i] - Data::delta*Vector2(1, 0));
+                dx1 = Data::clampInside(vertices[i] + Data::delta*Vector2(1, 0));
                 Float ex0 = verticeEnergy(i, dx0, buffer_memory);
                 Float ex1 = verticeEnergy(i, dx1, buffer_memory);
                 Vector2 dy0, dy1;
-                dy0 = Data::clamp(vertices[i] - Data::delta*Vector2(0, 1));
-                dy1 = Data::clamp(vertices[i] + Data::delta*Vector2(0, 1));
+                dy0 = Data::clampInside(vertices[i] - Data::delta*Vector2(0, 1));
+                dy1 = Data::clampInside(vertices[i] + Data::delta*Vector2(0, 1));
                 Float ey0 = verticeEnergy(i, dy0, buffer_memory);
                 Float ey1 = verticeEnergy(i, dy1, buffer_memory);
                 grad[i] = {(ex1-ex0)/(dx1.x-dx0.x), (ey1-ey0)/(dy1.y-dy0.y)};
@@ -424,9 +462,10 @@ namespace Stylization {
                 int v0, v1, u0, u1;
                 getFlipEdgeVertices(X, Y, u0, u1, v0, v1);
                 if(u0 < 0) continue ;
-                Float S = energies[X]+energies[Y];
-                Float T = energy(vertices[u0], vertices[u1], vertices[v0], false, buffer_memory)
-                        + energy(vertices[u0], vertices[u1], vertices[v1], false, buffer_memory);
+                Float S = (energies[X]+energies[Y])*3.0f + Data::lambda*(vertices[v0]-vertices[v1]).lengthSquared();
+                Float T = (energy(vertices[u0], vertices[u1], vertices[v0], false, buffer_memory)
+                         + energy(vertices[u0], vertices[u1], vertices[v1], false, buffer_memory))*3.0f
+                         + Data::lambda*(vertices[u0]-vertices[u1]).lengthSquared();
                 if(T*(1.0f+Data::flip_threshould) < S) ifflip[i] = true;
                 else ifflip[i] = false;
             }
@@ -451,6 +490,7 @@ namespace Stylization {
             threads[i]->join();
             delete threads[i];
         }
+        // Flip 
         if(oper_type == 3) {
             std::function<int(int, int)> pack = [] (int a, int b) {
                 if(a > b) std::swap(a, b);
@@ -494,15 +534,12 @@ namespace Stylization {
             }
             delete [] flipped;
             delete [] ifflip;
-        } else if(oper_type == 1 || oper_type == 2) {
-            std::vector<char> trflags;
-            trflags.resize(triangles.size());
-            //if(triangles.size() > 100) return ;
+        } else if(oper_type == 1 || oper_type == 2) { // Split or Collapse
             bool fir = true;
             int minpos = -1;
             Float minv = 1e10;
+            std::vector<std::pair<Float, int> > split_pos;
             for(int i = 0; i<(int)triangles.size(); i++) {
-                trflags[i] = 0;
                 if(!validTriangle(i)) continue ;
                 Float area = cross(
                     triangles[i][1]-triangles[i][0],
@@ -516,15 +553,21 @@ namespace Stylization {
                     energies[i]/area > Data::split_density_threshold
                  && energies[i] > Data::split_energy_lower_threshold
                  && area > Data::collapse_area_threshold*2
-                ) trflags[i] = 1;
+                ) split_pos.push_back(
+                    std::make_pair(
+                        energies[i]/area+Data::split_balance_factor*energies[i],
+                        i
+                    )
+                );
             }
-            if(oper_type == 1)
-                for(int i = 0; i<(int)trflags.size(); i++) {
-                    if(!validTriangle(i)) continue ;
-                    if(trflags[i] == 1)
-                        ret |= splitTriangle(i);
+            if(oper_type == 1) {
+                sort(split_pos.begin(), split_pos.end());
+                int t = (int)split_pos.size()-Data::split_number+1;
+                for(int i = (int)split_pos.size()-1; i>=std::max(0, t); i--) {
+                    if(numTriangles() < Data::max_triangles-1)
+                        ret |= splitTriangle(split_pos[i].second);
                 }
-            else if(minpos != -1) ret |= collapseTriangle(minpos);
+            } else if(minpos != -1) ret |= collapseTriangle(minpos);
         }
         delete [] energies;
         return ret;
@@ -579,23 +622,29 @@ namespace Stylization {
         verticeGradients(grad);
         for(int i = 0; i<(int)vertices.size(); i++) {
             if(!validVertice(i)) continue ;
-            if(vertices[i].x == 0 && vertices[i].y == 0) continue ;
-            if(vertices[i].x == 0 && vertices[i].y == Data::image_height) continue ;
-            if(vertices[i].x == Data::image_width && vertices[i].y == 0) continue ;
-            if(vertices[i].x == Data::image_width && vertices[i].y == Data::image_height) continue ;
+            if(isStatic(i)) continue ;
             Vector2 det = Data::h*grad[i];
             Float l = sqrt(det.lengthSquared());
             if(l > Data::smax) det *= Data::smax/l;
-            vertices[i] = Data::clamp(vertices[i]-det);
+            if(isBorder(i)) {
+                if(vertices[i].x == 0 || vertices[i].x == Data::image_width)
+                    det.x = 0;
+                else det.y = 0;
+                vertices[i] = Data::clamp(vertices[i]-det);
+            } else {
+                // Only through collapsing can a vertice become a border vertice
+                vertices[i] = Data::clampInside(vertices[i]-det);
+            }
         }
         delete [] grad;
-        if(n_iters%Data::split_interval == 0) 
-            maintainTriangulation(F_OPER_SPLIT);
-        else if(n_iters%Data::collapse_interval == 0) 
-            maintainTriangulation(F_OPER_COLLAPSE);
-        else if(n_iters%Data::flip_interval == 0) 
-            maintainTriangulation(F_OPER_FLIP);
-        else maintainTriangulation(0);
+        bool f = false;
+        if(n_iters%Data::split_interval == 0 || n_iters <= 1) 
+            maintainTriangulation(F_OPER_SPLIT), f = true;
+        if(n_iters%Data::collapse_interval == 0) 
+            maintainTriangulation(F_OPER_COLLAPSE), f = true;
+        if(n_iters%Data::flip_interval == 0) 
+            maintainTriangulation(F_OPER_FLIP), f = true;
+        if(!f) maintainTriangulation(0);
         printf("verts:%d, trigs:%d\n", 
             (int)vertices.size()-(int)mem_vertices.size(),
             (int)triangles.size()-(int)mem_triangles.size()

@@ -11,7 +11,7 @@
 // 像素放大系数，如果用高分屏可以把这个东西开成2以上。
 const int display_scaler = 2;
 
-GLubyte img[1280*1280][3];
+GLubyte img[1920*1280][3];
 
 
 int main(int argc, char**argv)
@@ -47,7 +47,7 @@ int main(int argc, char**argv)
     
 
     int iters = 0;
-    int max_iters = 1000;
+    int max_iters = 10000;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
