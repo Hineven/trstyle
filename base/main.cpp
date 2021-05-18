@@ -1,12 +1,14 @@
-// 这是一个简单的Demo，包含最基础的CPU版梯度下降以及最基本的常值渲染
-// 大家可以先看看效果。
+// 这是一个简单的Demo，展示了一下梯度下降模块的使用方法
+// 大家可以用它先看看效果。
 
 #include "data.hpp"
 #include "stylization.hpp"
 // 这个头文件需要安装OpenGL以及GLFW库，在Windows下需要特别配置
 #include <GLFW/glfw3.h>
-
+// 调试用的
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 // 像素放大系数，如果用高分屏可以把这个东西开成2以上。
 const int display_scaler = 2;

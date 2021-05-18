@@ -2,7 +2,6 @@
  * Filename: /home/hineven/prj/trstyle/calculation.cpp
  * Path: /home/hineven/prj/trstyle
  * Created Date: Monday, May 17th 2021, 7:20:32 pm
- * Author: Hineven
  * 
  * Copyright (c) 2021 QwQ Unlimited Company
  */

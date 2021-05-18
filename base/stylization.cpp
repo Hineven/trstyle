@@ -9,19 +9,32 @@
 
 #include "stylization.hpp"
 #include "data.hpp"
+#include "heads.hpp"
 
 namespace Stylization {
-#define F_TRIANGLE_VALID 1
+    constexpr int F_TRIANGLE_VALID = 1;
     struct ChainNode {
         short value;
         short next;
+    };
+    class Vector2Grad: public Vector2 {
+    public:
+        Vector2 grad {0};
+        inline Vector2Grad () = default;
+        inline explicit Vector2Grad (const Float & f): Vector2(f) {}
+        inline Vector2Grad (Float a, Float b): Vector2(a, b) {assert(!isNan(x) && !isNan(y));}
+        Vector2Grad & operator = (const Vector2 & t) {
+            x = t.x;
+            y = t.y;
+            return *this;
+        }
     };
     // memory pool of chains
     std::vector<ChainNode> chain_nodes;
     // Garabage recycling
     std::queue<int> mem_chain_nodes;
     // Trianglulation vertices
-    std::vector<Vector2> vertices;
+    std::vector<Vector2Grad> vertices;
     // Triangles adjacent to any vertices 
     std::vector<ChainNode> connections;
     inline bool isStatic (int i) {
@@ -29,6 +42,12 @@ namespace Stylization {
         if(vertices[i].x == 0 && vertices[i].y == Data::image_height) return true;
         if(vertices[i].x == Data::image_width && vertices[i].y == 0) return true;
         if(vertices[i].x == Data::image_width && vertices[i].y == Data::image_height) return true;
+        return false;
+    }
+    inline bool isBorder (Vector2 u) {
+        if(u.x == 0 || u.y == 0) return true;
+        if(u.x == Data::image_width
+        || u.y == Data::image_height) return true;
         return false;
     }
     inline bool isBorder (int i) {
@@ -82,7 +101,7 @@ namespace Stylization {
         }
         // Report a bug.
         fatal("Ah sure I'm f**ked.");
-        // *1 *2 *3 *4 *5 *6 *7 *8 *9 *10 *11 *12 *13 *14 *15 *16 *17, a total of 17 bugs fixed.
+        // *1 *2 *3 *4 *5 *6 *7 *8 *9 *10 *11 *12 *13 *14 *15 *16 *17 *18, a total of 18 bugs fixed.
     }
     inline void chainPurge (int position) {
         int cur = connections[position].next;
@@ -135,7 +154,7 @@ namespace Stylization {
     }
     inline void eraseVertice (int index) {
         chainPurge(index);
-        vertices[index] = {-1, -1};
+        vertices[index] = Vector2Grad(-1, -1);
         mem_vertices.push(index);
     }
     inline void eraseTriangle (int index) {
@@ -178,7 +197,10 @@ namespace Stylization {
         chainInsertElement(nv, z);
         return true;
     }
-    // Collapse a triangle by merging vertices connected by its shortest edge
+    // Collapse a triangle in one of the 3 following patterns
+    // 1. merging vertices connected by its shortest edge
+    // 2. flip an edge
+    // 3. merge a vertice onto the image border
     // Special case when collapsing a triangle which has an edge overlaps the
     // image border
     bool collapseTriangle (int index) {
@@ -186,6 +208,7 @@ namespace Stylization {
         int a = triangles[index].v[0];
         int b = triangles[index].v[1];
         int c = triangles[index].v[2];
+        // 3. merge a vertice onto the image border
         if((isBorder(a) && isBorder(b))
         || (isBorder(b) && isBorder(c))
         || (isBorder(c) && isBorder(a))) {
@@ -213,9 +236,72 @@ namespace Stylization {
             return true;
         }
         Float l0, l1, l2;
-        l0 = (vertices[a]-vertices[b]).lengthSquared();
-        l1 = (vertices[b]-vertices[c]).lengthSquared();
-        l2 = (vertices[c]-vertices[a]).lengthSquared();
+        l0 = sqrt((vertices[a]-vertices[b]).lengthSquared());
+        l1 = sqrt((vertices[b]-vertices[c]).lengthSquared());
+        l2 = sqrt((vertices[c]-vertices[a]).lengthSquared());
+        // 2.merge a vertice onto an edge
+        /*
+        Float lmn = std::min(std::min(l0, l1), l2);
+        Float lmx = std::max(std::max(l0, l1), l2);
+        if((Data::collapse_edge_threshold < lmn
+        || Data::collapse_edge_r_threshold*lmx < lmn)) {
+            puts("Special collapse");
+            
+            if(l1 > l0 && l1 > l2) std::swap(a, b), std::swap(b, c); // b c a, keep counter-clokcwise
+            if(l2 > l0 && l2 > l1) std::swap(a, c), std::swap(b, c); // c a b
+            if(isBorder(c)) goto regret;
+            // Map vertice c onto segment a-b
+            vertices[c] =
+                vertices[a]+(vertices[b]-vertices[a]).normalized()
+              * dot(vertices[b]-vertices[a], vertices[c]-vertices[a]);
+            chainRemoveElement(a, index);
+            chainRemoveElement(b, index);
+            chainRemoveElement(c, index);
+            eraseTriangle(index);
+            std::function<bool(int)> checkAndModify = [&a, &b, &c] (int i) {
+                int C = 
+                   (triangles[i].v[0] == a)+(triangles[i].v[0] == b)
+                 + (triangles[i].v[1] == a)+(triangles[i].v[1] == b)
+                 + (triangles[i].v[2] == a)+(triangles[i].v[2] == b);
+                if(C < 2) return false;
+                if(C != 2) fatal("WTF");
+                int V;
+                if(triangles[i].v[0] != a && triangles[i].v[0] != b)
+                    V = triangles[i].v[0];
+                else if(triangles[i].v[1] != a && triangles[i].v[1] != b)
+                    V = triangles[i].v[1];
+                else if(triangles[i].v[2] != a && triangles[i].v[2] != b)
+                    V = triangles[i].v[2];
+                else fatal("I'm f**ked again. And again.");
+                // Find the triangle sharing the egde a-b: b-a-V
+                // Split it to b-c-v and c-a-v
+                chainRemoveElement(a, i);
+                chainRemoveElement(b, i);
+                chainRemoveElement(V, i);
+                eraseTriangle(i);
+                int X = newTriangle(), Y = newTriangle();
+                triangles[X] = {(short)b, (short)c, (short)V, F_TRIANGLE_VALID};
+                triangles[Y] = {(short)c, (short)a, (short)V, F_TRIANGLE_VALID};
+                chainInsertElement(b, X);
+                chainInsertElement(c, X);
+                chainInsertElement(V, X);
+                chainInsertElement(c, Y);
+                chainInsertElement(a, Y);
+                chainInsertElement(V, Y);
+                return true;
+            };
+            int cur = connections[a].next;
+            if(connections[a].value >= 0)
+                if(checkAndModify(connections[a].value)) return true;
+            while(cur >= 0) {
+                if(checkAndModify(chain_nodes[cur].value))
+                    return true;
+                cur = chain_nodes[cur].next;
+            }
+            fatal("Yeah I'm f**ked again.");
+        }
+        regret:;*/
+        // 1.merge two vertices
         std::function<void(int, int, int)> modify = [] (int tr, int x, int y) {
             if(triangles[tr].v[0] == y) triangles[tr].v[0] = x;
             if(triangles[tr].v[1] == y) triangles[tr].v[1] = x;
@@ -248,7 +334,6 @@ namespace Stylization {
             } else chainInsertElement(x, tr);
         };
         std::function<void(int, int)> operate = [&modify] (int x, int y) {
-            //printf("collapse:%lf\n", sqrt((vertices[x]-vertices[y]).lengthSquared()));
             if(isBorder(y)) std::swap(x, y);
             assert(!isBorder(y));
             int cur = connections[y].next;
@@ -264,9 +349,11 @@ namespace Stylization {
                 eraseVertice(x);
             eraseVertice(y);
         };
+
         if(l0 <= l1 && l0 <= l2) operate(a, b);
         else if(l1 <= l0 && l1 <= l2) operate(b, c);
         else operate(c, a);
+
         return true;
     }
 
@@ -330,9 +417,8 @@ namespace Stylization {
         return true;
     }
 
-    // Buffer should be thread local if this function is to be
-    // called in parallel in multiple cores.
-    Float verticeEnergy (int index, Vector2 pos, Float * buffer) {
+    Float verticeAttached (int index, Vector2 pos) {
+        if(isBorder(pos)) return 0;
         std::function<Float(int)> func = [&index, &pos] (int tr) {
             Float ret = 0;
             if(triangles[tr].v[0] != index) 
@@ -354,8 +440,15 @@ namespace Stylization {
             ret += func(chain_nodes[cur].value);
             cur = chain_nodes[cur].next;
         }
+        return ret;
+    }
+
+    // Buffer should be thread local if this function is to be
+    // called in parallel in multiple cores.
+    Float verticeEnergy (int index, Vector2 pos, Float * buffer) {
+        Float ret = verticeAttached(index, pos);
         Float sum = 0;
-        cur = connections[index].next;
+        int cur = connections[index].next;
         Vector2 x, y, z;
         int t = connections[index].value;
         x = triangles[t].v[0] == index
@@ -376,7 +469,7 @@ namespace Stylization {
             sum += energy(x, y, z, false, buffer);
             cur = chain_nodes[cur].next;
         }
-        return Data::lambda*ret+sum;
+        return Data::lambda*ret+sum/3;
     }
 
     static pthread_mutex_t _fetch_workload;
@@ -462,10 +555,20 @@ namespace Stylization {
                 int v0, v1, u0, u1;
                 getFlipEdgeVertices(X, Y, u0, u1, v0, v1);
                 if(u0 < 0) continue ;
-                Float S = (energies[X]+energies[Y])*3.0f + Data::lambda*(vertices[v0]-vertices[v1]).lengthSquared();
+                Float S = (energies[X]+energies[Y]) + Data::lambda*(vertices[v0]-vertices[v1]).lengthSquared();
                 Float T = (energy(vertices[u0], vertices[u1], vertices[v0], false, buffer_memory)
-                         + energy(vertices[u0], vertices[u1], vertices[v1], false, buffer_memory))*3.0f
+                         + energy(vertices[u0], vertices[u1], vertices[v1], false, buffer_memory))
                          + Data::lambda*(vertices[u0]-vertices[u1]).lengthSquared();
+                /*
+                Float s1, s2;
+                Float t1, t2;
+                s1 = abs(cross(vertices[v0]-vertices[u0], vertices[u1]-vertices[u0]));
+                s2 = abs(cross(vertices[v1]-vertices[u0], vertices[u1]-vertices[u0]));
+                t1 = abs(cross(vertices[v0]-vertices[u0], vertices[v1]-vertices[u0]));
+                t2 = abs(cross(vertices[v0]-vertices[u1], vertices[v1]-vertices[u1]));
+                T += s1*s2;
+                S += t1*t2;
+                */
                 if(T*(1.0f+Data::flip_threshould) < S) ifflip[i] = true;
                 else ifflip[i] = false;
             }
@@ -476,8 +579,11 @@ namespace Stylization {
     constexpr int F_OPER_SPLIT = 1;
     constexpr int F_OPER_COLLAPSE = 2;
     constexpr int F_OPER_FLIP = 3;
+    Float _cur_energy = Infinity;
     // Collapse triangles with too small area and split triangles
-    // with too big energy density as well as render a result
+    // with too big energy density, flip edges as well as render
+    // a result
+    // if oper_type == 0, render the result only.
     bool maintainTriangulation (int oper_type) {
         bool ret = false;
         _interval_top = 0;
@@ -489,6 +595,15 @@ namespace Stylization {
         for(int i = 0; i<Data::ncores; i++) {
             threads[i]->join();
             delete threads[i];
+        }
+        _cur_energy = 0;
+        for(int i = 0; i<(int)triangles.size(); i++) {
+            if(!validTriangle(i)) continue ;
+            _cur_energy += energies[i];
+        }
+        for(int i = 0; i<(int)vertices.size(); i++) {
+            if(!validVertice(i)) continue ;
+            _cur_energy += Data::lambda*verticeAttached(i, vertices[i]);   
         }
         // Flip 
         if(oper_type == 3) {
@@ -537,7 +652,7 @@ namespace Stylization {
         } else if(oper_type == 1 || oper_type == 2) { // Split or Collapse
             bool fir = true;
             int minpos = -1;
-            Float minv = 1e10;
+            Float minv = Infinity;
             std::vector<std::pair<Float, int> > split_pos;
             for(int i = 0; i<(int)triangles.size(); i++) {
                 if(!validTriangle(i)) continue ;
@@ -616,29 +731,48 @@ namespace Stylization {
         initializeWith(verts, 5, trigs, 4);
     }
 
+    bool shouldAdvance () {
+        static Float best = Infinity;
+        static int count = 0;
+        if(_cur_energy < best*(1-epsilon))
+            best = _cur_energy, count = 0;
+        else count ++;
+        if(count >= Data::split_stable) {
+            count = 0;
+            return true;
+        }
+        return false;
+    }
+
     void iterate () {
         static int n_iters = 0;
+        
         Vector2 * grad = new Vector2[vertices.size()];
         verticeGradients(grad);
         for(int i = 0; i<(int)vertices.size(); i++) {
             if(!validVertice(i)) continue ;
             if(isStatic(i)) continue ;
-            Vector2 det = Data::h*grad[i];
+            vertices[i].grad = 
+                Data::learning_lambda*vertices[i].grad + (1-Data::learning_lambda)*(grad[i]*grad[i]);
+            Float sqx, sqy;
+            sqx = sqrt(vertices[i].grad.x+epsilon);
+            sqy = sqrt(vertices[i].grad.y+epsilon);
+
+            Vector2 det = ((Data::h)*Vector2(1.0f/sqx, 1.0f/sqy))*grad[i];
             Float l = sqrt(det.lengthSquared());
             if(l > Data::smax) det *= Data::smax/l;
             if(isBorder(i)) {
                 if(vertices[i].x == 0 || vertices[i].x == Data::image_width)
                     det.x = 0;
                 else det.y = 0;
-                vertices[i] = Data::clamp(vertices[i]-det);
-            } else {
-                // Only through collapsing can a vertice become a border vertice
-                vertices[i] = Data::clampInside(vertices[i]-det);
             }
+            if(isBorder(i)) vertices[i] = Data::clamp(vertices[i]-det);
+            else // Only through collapsing can a vertice become a border vertice
+                vertices[i] = Data::clampInside(vertices[i]-det);
         }
         delete [] grad;
         bool f = false;
-        if(n_iters%Data::split_interval == 0 || n_iters <= 1) 
+        if(n_iters <= 1 || shouldAdvance()) 
             maintainTriangulation(F_OPER_SPLIT), f = true;
         if(n_iters%Data::collapse_interval == 0) 
             maintainTriangulation(F_OPER_COLLAPSE), f = true;

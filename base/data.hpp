@@ -1,7 +1,8 @@
 /*
  * Global configuration and shared data. Insert your configuration here
  * if needed.
- * 
+ * 这是一个配置文件，所有配置以及全局共享的量都在这里。
+ *
  * Copyright (c) 2021 QwQ Unlimited Company
  */
 #ifndef _H_DATA
@@ -12,57 +13,95 @@
 namespace Data {
 
 // 预模糊核，防止迭代中由于梯度不光滑而来回抖动的情况
-// （但貌似失败了...）
+// （但貌似没什么效果...）
 constexpr int blur_size = 2;
 inline Float blurKernel (int dx, int dy) {
     int d = abs(dx)+abs(dy);
-    if(d <= 1) return 0.12;
-    if(d <= 2) return 0.05;
+    if(d <= 1) return 0.10;
+    if(d <= 2) return 0.0625;
     return 0;
 }
 
+// 核心数，请根据你电脑的（逻辑）核心数目调整
 // Parallel calculation maximun threads
 // Change it to a proper number if your PC has more/less cores
 constexpr int ncores = 8;
 
+constexpr Float learning_lambda = 0.2;
+
+// 计算梯度时的微元的大小，单位是像素
 // Stepsize for differential measurement in pixels
 constexpr Float delta = 1;
+
+// 梯度下降步长，太长会来回抖动，太短会龟速爬行
 // Initial stepsize for gradient descent
-constexpr Float h = 4e-6;
+constexpr Float h = 1;
+
+// 梯度下降的最大单次移动距离（单位是像素），防止梯度爆炸引起的瞬移
 // Maximum stepsize for gradient descent
-constexpr Float smax = 3;
+constexpr Float smax = 1.5;
+
+// lambda，意义和论文中相同
 // laaaaaaaambda (amplifier of the restriction factor, refer to
 // the original paper or my notes for details)
-constexpr Float lambda = 10;
+constexpr Float lambda = 1;
 
-// Triangle split threshould
+// 当三角形的能量密度大于这个值时，可以对这个三角形进行分裂
+// Triangle split threshold
 // A new vertice will be placed at the cendroid of the triangle
 // if it's energy density exceeds this value.
 constexpr Float split_density_threshold = 40;
-// Triangle split threshould
+
+// 当三角形的总能量小于这个值时，不能对这个三角形进行分裂，该规则会复写上一条规则
+// Triangle split threshold
 // The triangle will NOT split if its energy is lower than this value
-constexpr Float split_energy_lower_threshold = 500;
+constexpr Float split_energy_lower_threshold = 200;
 
+// 当三角形面积小于这个值时，这个三角形可以被坍缩
 // Minimum area of a triangle, smaller triangles will be collapsed
-constexpr Float collapse_area_threshold = 50;
+constexpr Float collapse_area_threshold = 25;
 
+// 用于判断坍缩是否使用点坍缩到边的方法
+// 如果最短边长度小于这么多像素，才可能使用点坍缩到边的方法
+constexpr Float collapse_edge_threshold = 10;
+
+// 用于判断坍缩是否使用点坍缩到边的方法
+// 如果最短边长度小于最长边的这个倍数，才可能使用点坍缩到边的方法
+constexpr Float collapse_edge_r_threshold = 0.2;
+
+// 当翻转边可以带来大于该值的相对能量衰减时，翻转，否然不翻转
+// 0意味着只要能让能量下降，就一定翻转，越大，翻转的频率越低
 // Needed relative energy desend for a flip operation.
 constexpr Float flip_threshould = 0;
 
+// 三角形数目的严格上限
 // Maximum number of triangles
 constexpr int max_triangles = 1400;
-// Interval of a maintain operation.
-constexpr int split_interval = 71;
+
+// 这么多次能量不下降就进一步细分
+constexpr int split_stable = 8;
+
+// 每次分裂最多可以分裂多少三角形
 // Maximum triangle splits performed in a maintain operation
 constexpr int split_number = 64;
+
+// 挑选三角形进行分裂时，这个值越大，那么越偏爱优先分裂总能量
+// 更大的三角形，否然更偏爱分裂能量密度更大的三角形
 // Split balance factor, the bigger the value is, the more possible
 // bigger triangles with larger energy will be splited.
 constexpr Float split_balance_factor = 1e-2;
+
+// 每这么多次迭代尝试一次坍缩（由于代码实现的缺陷，
+// 一次坍缩最多只能坍缩一个三角形）
 // Interval of a maintain operation.
 constexpr int collapse_interval = 2;
+
+// 每过这么多次迭代尝试一次翻转边，所有能翻转的边可以一起翻转，
+// 如果对于一个三角形，有多条边可以翻转，那么随机选择
 // Interval of a maintain operation.
 constexpr int flip_interval = 7;
 
+// 以下是程序运行期间使用的输入输出和全局数据
 // The input image data is shared all over the program
 // Image width
 extern int image_width;
@@ -74,7 +113,7 @@ constexpr int image_nchan = 3;
 extern unsigned char * image;
 // Output buffer. Some render result will also be displayed here
 // 这个结构在使用GPU加速后应该会被改掉，不然绘制太慢了
-// 不过那暂时不是我该考虑的事情，嘿嘿嘿 -- Hineven
+// 不过那暂时不是我该考虑的事情，嘿嘿嘿
 extern Float * image_output;
 
 // Rendering style of a single triangle

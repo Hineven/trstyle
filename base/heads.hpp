@@ -47,8 +47,8 @@ inline bool isNan (const Vector2 & v) ;
 
 class Vector2 {
 	public:
-    Float x, y;
-    inline Vector2 (): x(0), y(0) {}
+    Float x{0}, y{0};
+    inline Vector2 () = default;
     inline explicit Vector2 (const Float & f): x(f),  y(f) {}
     inline Vector2 (Float a, Float b): x(a), y(b) {assert(!isNan(x) && !isNan(y));}
     inline Vector2 operator + (const Vector2 & b) const {return Vector2(x+b.x, y+b.y);}
@@ -80,6 +80,9 @@ class Vector2 {
 
 inline Vector2 operator * (const Float & a, const Vector2 & b) {
     return {a*b.x, a*b.y};
+}
+inline Vector2 operator * (const Vector2 & a, const Vector2 & b) {
+    return {a.x*b.x, a.y*b.y};
 }
 
 inline std::ostream & operator << (std::ostream & os, const Vector2 & vec) {

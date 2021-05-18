@@ -18,25 +18,26 @@ namespace Stylization {
 class Triangle;
 
 // Initialize the stylization process with two big triangles
+// Note: the function Data::loadImage must be called before
+// this function
 void initializeSimple () ;
 
 // Initialize the stylization process with some existing trianglulation
+// Note: the function Data::loadImage must be called before
+// running this function
 void initializeWith (
     const Vector2 * verts, int nverts,
     const Triangle * triangles, int ntriangles
 ) ;
 
-// Iterate. 
-//
-//
-//
-//
-//
-//
-// What else are you expecting really?
+// Initialize first, and iterate.
+// Just iterate, there's nothing the caller needs to worry about.
 void iterate () ;
 
-// Clear everything
+// Clear everything. It's useless if the program only runs once.
+// Also, its functionality has not been tested. So if a bug came
+// out because  of this function --
+// Dont blame me.
 void clear () ;
 
 }
