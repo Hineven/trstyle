@@ -27,7 +27,7 @@ inline Float blurKernel (int dx, int dy) {
 // Change it to a proper number if your PC has more/less cores
 constexpr int ncores = 8;
 
-constexpr Float learning_lambda = 0.2;
+constexpr Float learning_lambda = 0.3;
 
 // 计算梯度时的微元的大小，单位是像素
 // Stepsize for differential measurement in pixels
@@ -35,13 +35,13 @@ constexpr Float delta = 1;
 
 // 梯度下降步长，太长会来回抖动，太短会龟速爬行
 // Initial stepsize for gradient descent
-constexpr Float h = 1;
+constexpr Float h = 2e-1;
 
 // 梯度下降的最大单次移动距离（单位是像素），防止梯度爆炸引起的瞬移
 // Maximum stepsize for gradient descent
 constexpr Float smax = 1.5;
 
-// lambda，意义和论文中相同
+// lambda，意义和论文中相同，由于我们这里色彩没有归一化，所以相对论文的参考值会大很多
 // laaaaaaaambda (amplifier of the restriction factor, refer to
 // the original paper or my notes for details)
 constexpr Float lambda = 1;
@@ -53,20 +53,21 @@ constexpr Float lambda = 1;
 constexpr Float split_density_threshold = 40;
 
 // 当三角形的总能量小于这个值时，不能对这个三角形进行分裂，该规则会复写上一条规则
+// 为0表示任何三角形都能被分裂
 // Triangle split threshold
 // The triangle will NOT split if its energy is lower than this value
-constexpr Float split_energy_lower_threshold = 200;
+constexpr Float split_energy_lower_threshold = 0;
 
 // 当三角形面积小于这个值时，这个三角形可以被坍缩
 // Minimum area of a triangle, smaller triangles will be collapsed
-constexpr Float collapse_area_threshold = 25;
+constexpr Float collapse_area_threshold = 80;
 
-// 用于判断坍缩是否使用点坍缩到边的方法
-// 如果最短边长度小于这么多像素，才可能使用点坍缩到边的方法
+// 用于判断坍缩是否使用边坍缩的方法
+// 如果最短边长度小于这么多像素，才可能使用边坍缩的方法
 constexpr Float collapse_edge_threshold = 10;
 
-// 用于判断坍缩是否使用点坍缩到边的方法
-// 如果最短边长度小于最长边的这个倍数，才可能使用点坍缩到边的方法
+// 用于判断坍缩是否使用边坍缩的方法
+// 如果最短边长度小于最长边的这个倍数，才可能使用边坍缩的方法
 constexpr Float collapse_edge_r_threshold = 0.2;
 
 // 当翻转边可以带来大于该值的相对能量衰减时，翻转，否然不翻转
@@ -76,10 +77,12 @@ constexpr Float flip_threshould = 0;
 
 // 三角形数目的严格上限
 // Maximum number of triangles
-constexpr int max_triangles = 1400;
+constexpr int max_triangles = 800;
 
 // 这么多次能量不下降就进一步细分
 constexpr int split_stable = 8;
+// 总能量至少相对下降这么多才算一次下降
+constexpr Float split_descend = 0;
 
 // 每次分裂最多可以分裂多少三角形
 // Maximum triangle splits performed in a maintain operation
@@ -87,9 +90,10 @@ constexpr int split_number = 64;
 
 // 挑选三角形进行分裂时，这个值越大，那么越偏爱优先分裂总能量
 // 更大的三角形，否然更偏爱分裂能量密度更大的三角形
+// 0表示三角形总能量不影响分裂对象的挑选
 // Split balance factor, the bigger the value is, the more possible
 // bigger triangles with larger energy will be splited.
-constexpr Float split_balance_factor = 1e-2;
+constexpr Float split_balance_factor = 0;
 
 // 每这么多次迭代尝试一次坍缩（由于代码实现的缺陷，
 // 一次坍缩最多只能坍缩一个三角形）
@@ -160,7 +164,7 @@ inline void loadImage (
     if (png_image_begin_read_from_file(&pimage, filename.c_str()) == 0) 
         fatal("Failed to load image file: "+filename);
     if(pimage.format|PNG_FORMAT_FLAG_ALPHA)
-        std :: cout << "Ignoring alpha channel.";
+        std :: cout << "Ignoring alpha channel." << std::endl;
     pimage.format = PNG_FORMAT_RGB;
     // Allocate memory for image data.
     image = (unsigned char*)malloc(PNG_IMAGE_SIZE(pimage));
@@ -171,7 +175,7 @@ inline void loadImage (
         image_height = pimage.height;
         png_image_free(&pimage);
         image_output = new Float[image_width*image_height*image_nchan];
-        std :: cout << "Pre blurring...";
+        std :: cout << "Pre blurring..." << std::endl;
         unsigned char * t_buffer = new unsigned char [image_width*image_height*image_nchan];
         for(int i = 0; i<image_height; i++)
             for(int j = 0; j<image_width; j++) {

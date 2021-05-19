@@ -240,67 +240,16 @@ namespace Stylization {
         l1 = sqrt((vertices[b]-vertices[c]).lengthSquared());
         l2 = sqrt((vertices[c]-vertices[a]).lengthSquared());
         // 2.merge a vertice onto an edge
-        /*
+        
         Float lmn = std::min(std::min(l0, l1), l2);
         Float lmx = std::max(std::max(l0, l1), l2);
         if((Data::collapse_edge_threshold < lmn
         || Data::collapse_edge_r_threshold*lmx < lmn)) {
-            puts("Special collapse");
-            
-            if(l1 > l0 && l1 > l2) std::swap(a, b), std::swap(b, c); // b c a, keep counter-clokcwise
-            if(l2 > l0 && l2 > l1) std::swap(a, c), std::swap(b, c); // c a b
-            if(isBorder(c)) goto regret;
-            // Map vertice c onto segment a-b
-            vertices[c] =
-                vertices[a]+(vertices[b]-vertices[a]).normalized()
-              * dot(vertices[b]-vertices[a], vertices[c]-vertices[a]);
-            chainRemoveElement(a, index);
-            chainRemoveElement(b, index);
-            chainRemoveElement(c, index);
-            eraseTriangle(index);
-            std::function<bool(int)> checkAndModify = [&a, &b, &c] (int i) {
-                int C = 
-                   (triangles[i].v[0] == a)+(triangles[i].v[0] == b)
-                 + (triangles[i].v[1] == a)+(triangles[i].v[1] == b)
-                 + (triangles[i].v[2] == a)+(triangles[i].v[2] == b);
-                if(C < 2) return false;
-                if(C != 2) fatal("WTF");
-                int V;
-                if(triangles[i].v[0] != a && triangles[i].v[0] != b)
-                    V = triangles[i].v[0];
-                else if(triangles[i].v[1] != a && triangles[i].v[1] != b)
-                    V = triangles[i].v[1];
-                else if(triangles[i].v[2] != a && triangles[i].v[2] != b)
-                    V = triangles[i].v[2];
-                else fatal("I'm f**ked again. And again.");
-                // Find the triangle sharing the egde a-b: b-a-V
-                // Split it to b-c-v and c-a-v
-                chainRemoveElement(a, i);
-                chainRemoveElement(b, i);
-                chainRemoveElement(V, i);
-                eraseTriangle(i);
-                int X = newTriangle(), Y = newTriangle();
-                triangles[X] = {(short)b, (short)c, (short)V, F_TRIANGLE_VALID};
-                triangles[Y] = {(short)c, (short)a, (short)V, F_TRIANGLE_VALID};
-                chainInsertElement(b, X);
-                chainInsertElement(c, X);
-                chainInsertElement(V, X);
-                chainInsertElement(c, Y);
-                chainInsertElement(a, Y);
-                chainInsertElement(V, Y);
-                return true;
-            };
-            int cur = connections[a].next;
-            if(connections[a].value >= 0)
-                if(checkAndModify(connections[a].value)) return true;
-            while(cur >= 0) {
-                if(checkAndModify(chain_nodes[cur].value))
-                    return true;
-                cur = chain_nodes[cur].next;
-            }
-            fatal("Yeah I'm f**ked again.");
+            // We wont do anything here cause we'll wait for the 'flip'
+            // operation to collapse this triangle
+            // Simply tell the caller that we've failed.
+            return false;
         }
-        regret:;*/
         // 1.merge two vertices
         std::function<void(int, int, int)> modify = [] (int tr, int x, int y) {
             if(triangles[tr].v[0] == y) triangles[tr].v[0] = x;
@@ -559,16 +508,6 @@ namespace Stylization {
                 Float T = (energy(vertices[u0], vertices[u1], vertices[v0], false, buffer_memory)
                          + energy(vertices[u0], vertices[u1], vertices[v1], false, buffer_memory))
                          + Data::lambda*(vertices[u0]-vertices[u1]).lengthSquared();
-                /*
-                Float s1, s2;
-                Float t1, t2;
-                s1 = abs(cross(vertices[v0]-vertices[u0], vertices[u1]-vertices[u0]));
-                s2 = abs(cross(vertices[v1]-vertices[u0], vertices[u1]-vertices[u0]));
-                t1 = abs(cross(vertices[v0]-vertices[u0], vertices[v1]-vertices[u0]));
-                t2 = abs(cross(vertices[v0]-vertices[u1], vertices[v1]-vertices[u1]));
-                T += s1*s2;
-                S += t1*t2;
-                */
                 if(T*(1.0f+Data::flip_threshould) < S) ifflip[i] = true;
                 else ifflip[i] = false;
             }
@@ -579,7 +518,8 @@ namespace Stylization {
     constexpr int F_OPER_SPLIT = 1;
     constexpr int F_OPER_COLLAPSE = 2;
     constexpr int F_OPER_FLIP = 3;
-    Float _cur_energy = Infinity;
+    static Float _cur_energy = Infinity;
+    static bool _negative_area_triangle = false;
     // Collapse triangles with too small area and split triangles
     // with too big energy density, flip edges as well as render
     // a result
@@ -605,6 +545,7 @@ namespace Stylization {
             if(!validVertice(i)) continue ;
             _cur_energy += Data::lambda*verticeAttached(i, vertices[i]);   
         }
+        _negative_area_triangle = false;
         // Flip 
         if(oper_type == 3) {
             std::function<int(int, int)> pack = [] (int a, int b) {
@@ -650,20 +591,19 @@ namespace Stylization {
             delete [] flipped;
             delete [] ifflip;
         } else if(oper_type == 1 || oper_type == 2) { // Split or Collapse
-            bool fir = true;
-            int minpos = -1;
-            Float minv = Infinity;
             std::vector<std::pair<Float, int> > split_pos;
+            std::vector<std::pair<Float, int> > collapse_pos;
             for(int i = 0; i<(int)triangles.size(); i++) {
                 if(!validTriangle(i)) continue ;
                 Float area = cross(
                     triangles[i][1]-triangles[i][0],
                     triangles[i][2]-triangles[i][0]
                 )/2;
-                if(area < 0 && fir) 
-                    puts("Area of a triangle goes negative!"), fir = false;
+                if(area < 0) _negative_area_triangle = true;
                 if(area < Data::collapse_area_threshold) {
-                    if(area < minv) minv = area, minpos = i;
+                    collapse_pos.push_back(
+                        std::make_pair(area, i)
+                    );
                 } else if(
                     energies[i]/area > Data::split_density_threshold
                  && energies[i] > Data::split_energy_lower_threshold
@@ -682,7 +622,13 @@ namespace Stylization {
                     if(numTriangles() < Data::max_triangles-1)
                         ret |= splitTriangle(split_pos[i].second);
                 }
-            } else if(minpos != -1) ret |= collapseTriangle(minpos);
+            } else {
+                if(collapse_pos.size() == 0) return false;
+                sort(collapse_pos.begin(), collapse_pos.end());
+                for(int i = 0; i<(int) collapse_pos.size(); i++)
+                    if(collapseTriangle(collapse_pos[i].second)) return true;
+                return false;
+            }
         }
         delete [] energies;
         return ret;
@@ -734,9 +680,11 @@ namespace Stylization {
     bool shouldAdvance () {
         static Float best = Infinity;
         static int count = 0;
-        if(_cur_energy < best*(1-epsilon))
+        if(_cur_energy < best*(1-Data::split_descend))
             best = _cur_energy, count = 0;
         else count ++;
+        if(_negative_area_triangle)
+            count = 0;
         if(count >= Data::split_stable) {
             count = 0;
             return true;
@@ -771,19 +719,23 @@ namespace Stylization {
                 vertices[i] = Data::clampInside(vertices[i]-det);
         }
         delete [] grad;
-        bool f = false;
+        maintainTriangulation(_negative_area_triangle);
         if(n_iters <= 1 || shouldAdvance()) 
-            maintainTriangulation(F_OPER_SPLIT), f = true;
-        if(n_iters%Data::collapse_interval == 0) 
-            maintainTriangulation(F_OPER_COLLAPSE), f = true;
+            maintainTriangulation(F_OPER_SPLIT);
         if(n_iters%Data::flip_interval == 0) 
-            maintainTriangulation(F_OPER_FLIP), f = true;
-        if(!f) maintainTriangulation(0);
-        printf("verts:%d, trigs:%d\n", 
-            (int)vertices.size()-(int)mem_vertices.size(),
-            (int)triangles.size()-(int)mem_triangles.size()
-        );
+            maintainTriangulation(F_OPER_FLIP);
         n_iters ++;
+        printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+        printf("#%d: V:%d, T:%d, E:%.1f", 
+            n_iters,
+            (int)vertices.size()-(int)mem_vertices.size(),
+            (int)triangles.size()-(int)mem_triangles.size(),
+            _cur_energy
+        );
     }
 
     void clear () {

@@ -46,14 +46,14 @@ int main(int argc, char**argv)
     glfwMakeContextCurrent(window);
 
     glViewport(0, 0, Data::image_width*display_scaler, Data::image_height*display_scaler);
-    
+
 
     int iters = 0;
     int max_iters = 10000;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        std::cout << "Iteration #" << ++iters << std::endl;
+        ++iters;
         if(iters > max_iters) break ;
         Stylization::iterate();
         glRasterPos2d(-1, -1);
