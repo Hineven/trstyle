@@ -12,6 +12,20 @@
 #include <png.h>
 namespace Data {
 
+// 最宏观，最重要的参数
+
+// 三角形数目的严格上限
+// Maximum number of triangles
+extern int max_triangles;
+
+// 目标剖分的每个三角形的能量密度上界
+// Triangle split threshold
+// A new vertice will be placed at the cendroid of the triangle
+// if it's energy density exceeds this value.
+extern Float split_density_threshold;
+
+// 不那么重要的参数
+
 // 预模糊核，防止迭代中由于梯度不光滑而来回抖动的情况
 // （但貌似没什么效果...）
 constexpr int blur_size = 2;
@@ -46,21 +60,22 @@ constexpr Float smax = 1.5;
 // the original paper or my notes for details)
 constexpr Float lambda = 1;
 
-// 当三角形的能量密度大于这个值时，可以对这个三角形进行分裂
-// Triangle split threshold
-// A new vertice will be placed at the cendroid of the triangle
-// if it's energy density exceeds this value.
-constexpr Float split_density_threshold = 40;
-
 // 当三角形的总能量小于这个值时，不能对这个三角形进行分裂，该规则会复写上一条规则
 // 为0表示任何三角形都能被分裂
 // Triangle split threshold
 // The triangle will NOT split if its energy is lower than this value
 constexpr Float split_energy_lower_threshold = 0;
 
+// 挑选三角形进行分裂时，这个值越大，那么越偏爱优先分裂总能量
+// 更大的三角形，否然更偏爱分裂能量密度更大的三角形
+// 0表示三角形总能量不影响分裂对象的挑选
+// Split balance factor, the bigger the value is, the more possible
+// bigger triangles with larger energy will be splited.
+constexpr Float split_balance_factor = 0;
+
 // 当三角形面积小于这个值时，这个三角形可以被坍缩
 // Minimum area of a triangle, smaller triangles will be collapsed
-constexpr Float collapse_area_threshold = 80;
+constexpr Float collapse_area_threshold = 20;
 
 // 用于判断坍缩是否使用边坍缩的方法
 // 如果最短边长度小于这么多像素，才可能使用边坍缩的方法
@@ -75,25 +90,14 @@ constexpr Float collapse_edge_r_threshold = 0.2;
 // Needed relative energy desend for a flip operation.
 constexpr Float flip_threshould = 0;
 
-// 三角形数目的严格上限
-// Maximum number of triangles
-constexpr int max_triangles = 800;
-
 // 这么多次能量不下降就进一步细分
 constexpr int split_stable = 8;
-// 总能量至少相对下降这么多才算一次下降
-constexpr Float split_descend = 0;
+// 总能量至少相对下降这么多才算一次下降，0表示任何总能量减小都算能量下降
+constexpr Float split_descend = 0.005;
 
 // 每次分裂最多可以分裂多少三角形
 // Maximum triangle splits performed in a maintain operation
 constexpr int split_number = 64;
-
-// 挑选三角形进行分裂时，这个值越大，那么越偏爱优先分裂总能量
-// 更大的三角形，否然更偏爱分裂能量密度更大的三角形
-// 0表示三角形总能量不影响分裂对象的挑选
-// Split balance factor, the bigger the value is, the more possible
-// bigger triangles with larger energy will be splited.
-constexpr Float split_balance_factor = 0;
 
 // 每这么多次迭代尝试一次坍缩（由于代码实现的缺陷，
 // 一次坍缩最多只能坍缩一个三角形）

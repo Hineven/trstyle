@@ -694,7 +694,10 @@ namespace Stylization {
 
     void iterate () {
         static int n_iters = 0;
-        
+        static Float best = Infinity;
+        static int bcnt = 0;
+        if(best*(1-epsilon) > _cur_energy) best = _cur_energy, bcnt = 0;
+        else bcnt ++;
         Vector2 * grad = new Vector2[vertices.size()];
         verticeGradients(grad);
         for(int i = 0; i<(int)vertices.size(); i++) {
@@ -730,11 +733,20 @@ namespace Stylization {
         printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
         printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
         printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-        printf("#%d: V:%d, T:%d, E:%.1f", 
+        static bool stable = false;
+        if(bcnt > Data::split_stable+24 && (int)triangles.size() < Data::max_triangles)
+            stable = true;
+        printf("#%d: V:%d, T:%d, E:%.1f, %s              ", 
             n_iters,
             (int)vertices.size()-(int)mem_vertices.size(),
             (int)triangles.size()-(int)mem_triangles.size(),
-            _cur_energy
+            _cur_energy,
+            stable ? "\033[32;1mstable\033[0m"
+                   : (
+                    (int)triangles.size() == Data::max_triangles
+                    ?"\033[31;1mrestrained\033[0m"
+                    :"\033[33mdescending\033[0m"
+                   )
         );
     }
 

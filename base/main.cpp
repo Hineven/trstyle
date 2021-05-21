@@ -20,8 +20,9 @@ int main(int argc, char**argv)
 {
     srand(10000);
 
-    if(argc != 2) fatal("Please specify a PNG image file.");
-
+    if(argc < 2) fatal("Useage: style <PNG file name> [maximum energy density] [maximum triangles]");
+    if(argc >= 3) sscanf(argv[2], "%f", &Data::split_density_threshold);
+    if(argc >= 4) sscanf(argv[3], "%d", &Data::max_triangles);
     Data::loadImage(argv[1]);
     Stylization::initializeSimple();
 

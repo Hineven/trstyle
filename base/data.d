@@ -1,4 +1,4 @@
-data.o :  data.cpp heads.hpp
+data.o :  data.cpp data.hpp heads.hpp
 	g++ $< -c -o $@ -Wall -Werror -Ofast
 
-data.d :  data.cpp heads.hpp
+data.d :  data.cpp data.hpp heads.hpp
