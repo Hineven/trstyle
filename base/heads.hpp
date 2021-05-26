@@ -100,26 +100,7 @@ inline Float cross (const Vector2 & a, const Vector2 & b) {
 inline bool isNan (const Vector2 & v) {
     return isNan(v.x) || isNan(v.y);
 }
-class Vector2Grad: public Vector2 {
-public:
-    Vector2 grad {0};
-    inline Vector2Grad () = default;
-    inline explicit Vector2Grad (const Float & f): Vector2(f) {}
-    inline Vector2Grad (Float a, Float b): Vector2(a, b) {assert(!isNan(x) && !isNan(y));}
-    Vector2Grad & operator = (const Vector2 & t) {
-        x = t.x;
-        y = t.y;
-        return *this;
-    }
-};
-// Trianglulation vertices
-extern std::vector<Vector2Grad> vertices;
-struct Triangle {
-    // Indices of triangle vertices, sorted in anti-clockwise order spatially
-    short v[3], t;
-    inline Vector2 operator [] (int i) const {return vertices[v[i]];}
-    inline Vector2 & operator [] (int i) {return vertices[v[i]];}
-};
+
 
 class Color {
 public:

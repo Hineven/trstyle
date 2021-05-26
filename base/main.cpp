@@ -17,6 +17,10 @@ const int display_scaler = 2;
 GLubyte img[1920*1280][3];
 
 
+struct _Tri {
+    short a, b, c, v;
+} tri[500];
+
 int main(int argc, char**argv)
 {
     srand(10000);
@@ -29,14 +33,14 @@ int main(int argc, char**argv)
 
     Init::InitializeMain();
     //Stylization::initializeSimple();
-    Init::InitializeMain();
-    Triangle tri[500];
+    //Init::InitializeMain();
     for(int i=0;i<Init::num;i++){
-        tri[i].v[0]=Init::trigs[i].v[0];
-        tri[i].v[1]=Init::trigs[i].v[1];
-        tri[i].v[2]=Init::trigs[i].v[2];
+        tri[i].a = Init::trigs[i].v[0];
+        tri[i].b = Init::trigs[i].v[1];
+        tri[i].c = Init::trigs[i].v[2];
+        tri[i].v = 0;
     }
-    Stylization::initializeWith(Init::verts, Init::n, tri, Init::num);
+    Stylization::initializeWith(Init::verts, Init::n, (Stylization::Triangle*)tri, Init::num);
     GLFWwindow* window;
 
     /* Initialize the library */

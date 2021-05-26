@@ -99,6 +99,7 @@ namespace Stylization {
         connections[position] = {-1, -1};
     }
     
+    std::vector<Vector2Grad> vertices;
     std::vector<Triangle> triangles;
     // Garbage recycling
     std::queue<int> mem_vertices;
