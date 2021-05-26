@@ -86,20 +86,28 @@ namespace Init{
         short v[3], t;
     };
 
-    extern Vector2 verts[100];
-    extern Triangle trigs[500];
+    extern Vector2 verts[10000];
+    extern Triangle trigs[50000];
     extern int num;
     void InitializeMain(){
         num=0;
-        for(int i=0;i<100;i++){
+        verts[0] = {0, 0};
+        verts[1] = {(Float)Data::image_width, 0};
+        verts[2] = {(Float)Data::image_width, (Float)Data::image_height};
+        verts[3] = {0, (Float)Data::image_height};
+        p[0].x=0;p[0].y=0;
+        p[1].x=Data::image_width;p[1].y=0;
+        p[2].x=Data::image_width;p[2].y=Data::image_height;
+        p[3].x=0;p[3].y=Data::image_height;
+        std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
+        n=5;
+        for(int i=4;i<n;i++){
             int xxx=(std::rand()%(Data::image_width));
             int yyy=(std::rand()%(Data::image_height));
             verts[i]={(Float)xxx,(Float)yyy};
-            std::cerr<<xxx<<" "<<yyy<<std::endl;
             p[i].x=xxx;
             p[i].y=yyy;
         }
-        n=100;
         for(int i=0;i<n;i++)pp[i]=std::make_pair((int)p[i].x,(int)p[i].y); 
         std::sort(pp,pp+n);
 	    int uk=unique(pp,pp+n)-pp;
@@ -109,8 +117,9 @@ namespace Init{
 	    n=uk;
 	    for(int i=0;i<n;i++){
             p[i].x=pp[i].x,p[i].y=pp[i].y;
-            verts[i]={(Float)p[i].x,(Float)p[i].y};
+            verts[i]={(Float)pp[i].x,(Float)pp[i].y};
             pos[i]=i;
+            //std::cerr<<pp[i].x<<" "<<pp[i].y<<std::endl;
         }
         std::sort(pos,pos+n,cmp);
         int i=1;
@@ -148,6 +157,7 @@ namespace Init{
                 trigs[num].v[0]=x.x;
                 trigs[num].v[1]=x.y;
                 trigs[num++].v[2]=x.z;
+                //std::cerr<<num<<" "<<x.x<<" "<<x.y<<" "<<x.z<<std::endl;
             }
             if(i==n)break;
             lst=swp=p[pos[i]].x,curx=p[pos[i]].y;
@@ -184,6 +194,9 @@ namespace Init{
         }
 
         //Stylization::initializeWith(verts, n, trigs, num);
+        for(int i=0;i<n;i++){
+            //std::cerr<<p[i].x<<" "<<p[i].y<<std::endl;
+        }
     }
 
 }

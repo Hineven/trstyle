@@ -19,7 +19,7 @@ GLubyte img[1920*1280][3];
 
 struct _Tri {
     short a, b, c, v;
-} tri[500];
+} tri[50000];
 
 int main(int argc, char**argv)
 {
@@ -31,16 +31,21 @@ int main(int argc, char**argv)
     Data::loadImage(argv[1]);
 
 
-    Init::InitializeMain();
-    //Stylization::initializeSimple();
     //Init::InitializeMain();
+    //Stylization::initializeSimple();
+    Init::InitializeMain();
     for(int i=0;i<Init::num;i++){
         tri[i].a = Init::trigs[i].v[0];
         tri[i].b = Init::trigs[i].v[1];
         tri[i].c = Init::trigs[i].v[2];
         tri[i].v = 0;
+        std::cerr<<tri[i].a<<" "<<tri[i].b<<" "<<tri[i].c<<std::endl;
+    }
+    for(int i=0;i<Init::n;i++){
+        std::cerr<<Init::verts[i].x<<" "<<Init::verts[i].y<<std::endl;
     }
     Stylization::initializeWith(Init::verts, Init::n, (Stylization::Triangle*)tri, Init::num);
+    
     GLFWwindow* window;
 
     /* Initialize the library */
