@@ -3,6 +3,7 @@
 
 #include "data.hpp"
 #include "stylization.hpp"
+#include "Pretreatment.hpp"
 // 这个头文件需要安装OpenGL以及GLFW库，在Windows下需要特别配置
 #include <GLFW/glfw3.h>
 // 调试用的
@@ -24,9 +25,18 @@ int main(int argc, char**argv)
     if(argc >= 3) sscanf(argv[2], "%f", &Data::split_density_threshold);
     if(argc >= 4) sscanf(argv[3], "%d", &Data::max_triangles);
     Data::loadImage(argv[1]);
-    Stylization::initializeSimple();
 
 
+    Init::InitializeMain();
+    //Stylization::initializeSimple();
+    Init::InitializeMain();
+    Triangle tri[500];
+    for(int i=0;i<Init::num;i++){
+        tri[i].v[0]=Init::trigs[i].v[0];
+        tri[i].v[1]=Init::trigs[i].v[1];
+        tri[i].v[2]=Init::trigs[i].v[2];
+    }
+    Stylization::initializeWith(Init::verts, Init::n, tri, Init::num);
     GLFWwindow* window;
 
     /* Initialize the library */

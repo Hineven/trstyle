@@ -17,24 +17,11 @@ namespace Stylization {
         short value;
         short next;
     };
-    class Vector2Grad: public Vector2 {
-    public:
-        Vector2 grad {0};
-        inline Vector2Grad () = default;
-        inline explicit Vector2Grad (const Float & f): Vector2(f) {}
-        inline Vector2Grad (Float a, Float b): Vector2(a, b) {assert(!isNan(x) && !isNan(y));}
-        Vector2Grad & operator = (const Vector2 & t) {
-            x = t.x;
-            y = t.y;
-            return *this;
-        }
-    };
     // memory pool of chains
     std::vector<ChainNode> chain_nodes;
     // Garabage recycling
     std::queue<int> mem_chain_nodes;
-    // Trianglulation vertices
-    std::vector<Vector2Grad> vertices;
+    
     // Triangles adjacent to any vertices 
     std::vector<ChainNode> connections;
     inline bool isStatic (int i) {
@@ -111,12 +98,7 @@ namespace Stylization {
         }
         connections[position] = {-1, -1};
     }
-    struct Triangle {
-        // Indices of triangle vertices, sorted in anti-clockwise order spatially
-        short v[3], t;
-        inline Vector2 operator [] (int i) const {return vertices[v[i]];}
-        inline Vector2 & operator [] (int i) {return vertices[v[i]];}
-    };
+    
     std::vector<Triangle> triangles;
     // Garbage recycling
     std::queue<int> mem_vertices;

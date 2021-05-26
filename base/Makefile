@@ -1,10 +1,11 @@
 CFLAGS = -Wall -Werror -Ofast
 
-libcmds = -lpthread -L/usr/local/lib -lglfw3 -lX11 -ldl -lGL -lpng
+libcmds = -lpthread -L/usr/local/lib -lglfw -lX11 -ldl -lGL -lpng
 
 objs = \
 calculation.o \
 stylization.o \
+Pretreatment.o \
 data.o 
 style: $(objs)
 	g++ main.cpp $(CFLAGS) -c -o main.o

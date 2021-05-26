@@ -15,7 +15,7 @@
 
 namespace Stylization {
 
-class Triangle;
+//class Triangle;
 
 // Initialize the stylization process with two big triangles
 // Note: the function Data::loadImage must be called before
