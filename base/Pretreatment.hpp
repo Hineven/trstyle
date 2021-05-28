@@ -6,7 +6,7 @@
 #include "stylization.hpp"
 
 namespace Init{
-    int n;
+    int n_init;
     int num;
     Vector2 verts[100];
     struct Triangle {

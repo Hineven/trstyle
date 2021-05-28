@@ -36,6 +36,7 @@ int main(int argc, char**argv)
     //Stylization::initializeSimple();
 
     Init::InitializeMain();
+    std::cerr<<"oooops!"<<std::endl;
     for(int i=0;i<Init::num;i++){
         tri[i].a = Init::trigs[i].v[0];
         tri[i].b = Init::trigs[i].v[1];
@@ -46,12 +47,12 @@ int main(int argc, char**argv)
         c = Init::verts[tri[i].c];
         if(cross(b-a, c-a) < 0) std::swap(tri[i].b, tri[i].c);
         tri[i].v = 0;
-        std::cerr<<tri[i].a<<" "<<tri[i].b<<" "<<tri[i].c<<std::endl;
+        //std::cerr<<tri[i].a<<" "<<tri[i].b<<" "<<tri[i].c<<std::endl;
     }
-    for(int i=0;i<Init::n;i++){
-        std::cerr<<Init::verts[i].x<<" "<<Init::verts[i].y<<std::endl;
+    for(int i=0;i<Init::n_init;i++){
+        //std::cerr<<Init::verts[i].x<<" "<<Init::verts[i].y<<std::endl;
     }
-    Stylization::initializeWith(Init::verts, Init::n, (Stylization::Triangle*)tri, Init::num);
+    Stylization::initializeWith(Init::verts, Init::n_init, (Stylization::Triangle*)tri, Init::num);
     
     GLFWwindow* window;
 
