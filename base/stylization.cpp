@@ -503,6 +503,7 @@ namespace Stylization {
     constexpr int F_OPER_FLIP = 3;
     static Float _cur_energy = Infinity;
     static bool _negative_area_triangle = false;
+    static float _max_energy_density = 0;
     // Collapse triangles with too small area and split triangles
     // with too big energy density, flip edges as well as render
     // a result
@@ -529,6 +530,16 @@ namespace Stylization {
             _cur_energy += Data::lambda*verticeAttached(i, vertices[i]);   
         }
         _negative_area_triangle = false;
+        for(int i = 0; i<(int)triangles.size(); i++) {
+            if(!validTriangle(i)) continue ;
+            Float area = cross(
+                triangles[i][1]-triangles[i][0],
+                triangles[i][2]-triangles[i][0]
+            )/2;
+            if(area > Data::collapse_area_threshold*2 
+            && energies[i] > Data::split_energy_lower_threshold)
+                _max_energy_density = std::max(energies[i]/area, _max_energy_density);
+        }
         // Flip 
         if(oper_type == 3) {
             std::function<int(int, int)> pack = [] (int a, int b) {
@@ -676,6 +687,7 @@ namespace Stylization {
     }
 
     void iterate () {
+        _max_energy_density = 0;
         static int n_iters = 0;
         static Float best = Infinity;
         static int bcnt = 0;
@@ -719,11 +731,12 @@ namespace Stylization {
         static bool stable = false;
         if(bcnt > Data::split_stable+24 && (int)triangles.size() < Data::max_triangles)
             stable = true;
-        printf("#%d: V:%d, T:%d, E:%.1f, %s              ", 
+        printf("#%d: V:%d, T:%d, E:%.1f, mx{E/A}:%.1f, %s,              ", 
             n_iters,
             (int)vertices.size()-(int)mem_vertices.size(),
             (int)triangles.size()-(int)mem_triangles.size(),
             _cur_energy,
+            _max_energy_density,
             stable ? "\033[32;1mstable\033[0m"
                    : (
                     (int)triangles.size() == Data::max_triangles
