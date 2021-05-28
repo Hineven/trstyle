@@ -26,7 +26,7 @@ namespace Init{
         D operator^(point z){return x*z.y-y*z.x;}
         bool operator<(point z)const{return abs(x-z.x)<eps?y<z.y:x<z.x;}
     };
-    extern int n_init;
+    int n_init;
     point p[N];
     D swp,curx;
     struct pr
@@ -86,9 +86,9 @@ namespace Init{
         short v[3], t;
     };
 
-    extern Vector2 verts[N];
-    extern Triangle trigs[N];
-    extern int num;
+    Vector2 verts[N];
+    Triangle trigs[N];
+    int num;
     void InitializeMain(){
         num=0;
         verts[0] = {0, 0};
@@ -100,14 +100,14 @@ namespace Init{
         p[2].x=Data::image_width;p[2].y=Data::image_height;
         p[3].x=0;p[3].y=Data::image_height;
         std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
-        n_init=500;
-    std::cerr<<"oooops!"<<std::endl;
+        n_init=1000;
+    //std::cerr<<"oooops!"<<std::endl;
         int xxx,yyy;
         for(int i=4;i<n_init;i++){
             xxx=(std::rand()%(Data::image_width));
             yyy=(std::rand()%(Data::image_height));
             verts[i]={(Float)xxx,(Float)yyy};
-    std::cerr<<i<<" "<<n_init<<std::endl;
+    //std::cerr<<i<<" "<<n_init<<std::endl; 
             p[i].x=xxx;
             p[i].y=yyy;
         }

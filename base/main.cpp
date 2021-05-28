@@ -36,7 +36,7 @@ int main(int argc, char**argv)
     //Stylization::initializeSimple();
 
     Init::InitializeMain();
-    std::cerr<<"oooops!"<<std::endl;
+    //std::cerr<<"oooops!"<<std::endl;
     for(int i=0;i<Init::num;i++){
         tri[i].a = Init::trigs[i].v[0];
         tri[i].b = Init::trigs[i].v[1];
