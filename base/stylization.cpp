@@ -365,14 +365,16 @@ namespace Stylization {
         // are on a convex hull. Refer to the original paper
         // for more detailed infomation.
         Float ret = 0;
+        int cnt = 0;
         int cur = connections[index].next;
         if(connections[index].value > 0)
-            ret += func(connections[index].value);
+            ret += func(connections[index].value), cnt ++;
         while(cur >= 0) {
             ret += func(chain_nodes[cur].value);
             cur = chain_nodes[cur].next;
+            cnt ++;
         }
-        return ret;
+        return cnt ? ret/cnt : 0;
     }
 
     // Buffer should be thread local if this function is to be

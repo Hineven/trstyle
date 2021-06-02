@@ -100,7 +100,7 @@ namespace Init{
         p[2].x=Data::image_width;p[2].y=Data::image_height;
         p[3].x=0;p[3].y=Data::image_height;
         std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
-        n_init=1000;
+        n_init=200;
     //std::cerr<<"oooops!"<<std::endl;
         int xxx,yyy;
         for(int i=4;i<n_init;i++){
