@@ -5,6 +5,8 @@
 #include "stylization.hpp"
 #include "Pretreatment.hpp"
 // 这个头文件需要安装OpenGL以及GLFW库，在Windows下需要特别配置
+#include <GL/glew.h>
+#include <GL/glut.h>
 #include <GLFW/glfw3.h>
 // 调试用的
 #ifndef _WIN32
