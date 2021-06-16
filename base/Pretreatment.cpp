@@ -11,7 +11,7 @@
 #define dis(a) (sqr(p[a.x].x-p[a.y].x)+sqr(p[a.x].y-p[a.y].y))
 
 namespace Init{
-    constexpr double eps=1e-10;
+    constexpr double eps =  1e-10;
     constexpr int N=200050;
     struct point
     {
@@ -90,6 +90,7 @@ namespace Init{
     Triangle trigs[N];
     int num;
     void InitializeMain(){
+        srand(time(0));
         num=0;
         verts[0] = {0, 0};
         verts[1] = {(Float)Data::image_width, 0};
@@ -101,9 +102,14 @@ namespace Init{
         p[3].x=0;p[3].y=Data::image_height;
         std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
         n_init=1500;
-    //std::cerr<<"oooops!"<<std::endl;
         int xxx,yyy;
-        for(int i=4;i<n_init;i++){
+        /*n_init = 5; 
+        xxx=Data::image_width / 2;
+        yyy=Data::image_height / 2;
+        verts[4]={(Float)xxx,(Float)yyy};
+    //std::cerr<<i<<" "<<n_init<<std::endl; 
+        p[4].x=xxx;p[4].y=yyy;*/
+        for(int i=4;i<n_init;i++){//随机撒点
             xxx=(std::rand()%(Data::image_width));
             yyy=(std::rand()%(Data::image_height));
             verts[i]={(Float)xxx,(Float)yyy};
@@ -111,12 +117,14 @@ namespace Init{
             p[i].x=xxx;
             p[i].y=yyy;
         }
+        
         for(int i=0;i<n_init;i++)pp[i]=std::make_pair((int)p[i].x,(int)p[i].y); 
-        std::sort(pp,pp+n_init);
+        std::sort(pp,pp+n_init);//排序
 	    int uk=unique(pp,pp+n_init)-pp;
-	    for(int i=0;i<n_init;i++){
+	    for(int i=0;i<n_init;i++){//去重
             tag[i]=lower_bound(pp,pp+uk,std::make_pair((int)p[i].x,(int)p[i].y))-pp;
         }
+
 	    n_init=uk;
 	    for(int i=0;i<n_init;i++){
             p[i].x=pp[i].x,p[i].y=pp[i].y;
@@ -128,6 +136,9 @@ namespace Init{
         int i=1;
         D lst=p[pos[0]].x;
         swp=lst+1;
+        for(int i=0;i<n_init;i++){
+            //std::cerr<<p[i].x<<" "<<p[i].y<<std::endl;
+        }
         while(i<n_init&&abs(p[pos[i]].x-lst)<eps)
         {
             All.insert(pr(pos[i-1],pos[i]));
@@ -135,11 +146,10 @@ namespace Init{
             i++;
         }
         int s=i;
-        for(;i<n_init+1;i++)
-        {
-		    while(!event.empty())
-            {
-                if((i^n_init)&&event.top().T>p[pos[i]].x+eps)break;
+        //std::cerr<<i<<std::endl;
+        for(;i <= n_init;i++){
+		    while(!event.empty()){//处理所有的圆事件
+                if((i^n_init) && event.top().T>p[pos[i]].x+eps)break;
                 ev x=event.top();
                 event.pop();
                 swp=(x.T+lst)/2;
@@ -163,10 +173,11 @@ namespace Init{
                 //std::cerr<<num<<" "<<x.x<<" "<<x.y<<" "<<x.z<<std::endl;
             }
             if(i==n_init)break;
-            lst=swp=p[pos[i]].x,curx=p[pos[i]].y;
-            std::set<pr>::iterator tmp=All.lower_bound(pr(-1,-1));
-            if(tmp!=All.end()&&abs(tmp->get_y(swp)-curx)<eps)
-            {
+            lst=swp=p[pos[i]].x;
+            curx=p[pos[i]].y;
+            std::set<pr>::iterator tmp=All.lower_bound(pr(-1,-1));//最左边的
+            if(tmp!=All.end()&& abs(tmp->get_y(swp)-curx)<eps){
+                //std::cerr<<"_____1_____"<<std::endl;
                 int d=tmp->x,u=tmp->y;
                 std::set<pr>::iterator tmp0=tmp;
                 if(++tmp0!=All.end()){
@@ -176,14 +187,20 @@ namespace Init{
                     --(tmp0=tmp);
                     add(tmp0->x,d,pos[i]);
                 }
+                //add(d,pos[i],u);
                 All.erase(tmp);
                 //G[d].push_back(pos[i]);G[pos[i]].push_back(d);
                 //G[pos[i]].push_back(u);G[u].push_back(pos[i]);
                 All.insert(pr(d,pos[i]));
                 All.insert(pr(pos[i],u));
+                trigs[num].v[0]=d;
+                trigs[num].v[1]=pos[i];
+                trigs[num++].v[2]=u;
+                //std::cerr<<num<<" "<<d<<" "<<pos[i]<<" "<<u<<std::endl;
             }
             else
             {
+                //std::cerr<<"_____2_____"<<std::endl;
                 int Mid=tmp==All.end()?pos[s-1]:tmp->x;
                 if(tmp!=All.end())add(pos[i],Mid,tmp->y);
                 if(tmp!=All.begin()){
@@ -195,11 +212,8 @@ namespace Init{
                 All.insert(pr(Mid,pos[i]));
             }
         }
-
+        std::cerr<<num<<std::endl;
         //Stylization::initializeWith(verts, n, trigs, num);
-        for(int i=0;i<n_init;i++){
-            //std::cerr<<p[i].x<<" "<<p[i].y<<std::endl;
-        }
     }
 
 }
