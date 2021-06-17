@@ -81,8 +81,7 @@ int main(int argc, char**argv)
     int iters = 0;
     int max_iters = 10000;
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         ++iters;
         if(iters > max_iters) break ;
         Stylization::iterate();

@@ -13,7 +13,7 @@
 
 namespace Data {
 
-int max_triangles = 6000;
+int max_triangles = 1100;
 
 Float split_density_threshold = 35;
 
