@@ -26,7 +26,7 @@ namespace Init{
         D operator^(point z){return x*z.y-y*z.x;}
         bool operator<(point z)const{return abs(x-z.x)<eps?y<z.y:x<z.x;}
     };
-    extern int n;
+    int n_init;
     point p[N];
     D swp,curx;
     struct pr
@@ -86,48 +86,60 @@ namespace Init{
         short v[3], t;
     };
 
-    extern Vector2 verts[100];
-    extern Triangle trigs[500];
-    extern int num;
+    Vector2 verts[N];
+    Triangle trigs[N];
+    int num;
     void InitializeMain(){
         num=0;
-        for(int i=0;i<100;i++){
-            int xxx=(std::rand()%(Data::image_width));
-            int yyy=(std::rand()%(Data::image_height));
+        verts[0] = {0, 0};
+        verts[1] = {(Float)Data::image_width, 0};
+        verts[2] = {(Float)Data::image_width, (Float)Data::image_height};
+        verts[3] = {0, (Float)Data::image_height};
+        p[0].x=0;p[0].y=0;
+        p[1].x=Data::image_width;p[1].y=0;
+        p[2].x=Data::image_width;p[2].y=Data::image_height;
+        p[3].x=0;p[3].y=Data::image_height;
+        std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
+        n_init=200;
+    //std::cerr<<"oooops!"<<std::endl;
+        int xxx,yyy;
+        for(int i=4;i<n_init;i++){
+            xxx=(std::rand()%(Data::image_width));
+            yyy=(std::rand()%(Data::image_height));
             verts[i]={(Float)xxx,(Float)yyy};
-            std::cerr<<xxx<<" "<<yyy<<std::endl;
+    //std::cerr<<i<<" "<<n_init<<std::endl; 
             p[i].x=xxx;
             p[i].y=yyy;
         }
-        n=100;
-        for(int i=0;i<n;i++)pp[i]=std::make_pair((int)p[i].x,(int)p[i].y); 
-        std::sort(pp,pp+n);
-	    int uk=unique(pp,pp+n)-pp;
-	    for(int i=0;i<n;i++){
+        for(int i=0;i<n_init;i++)pp[i]=std::make_pair((int)p[i].x,(int)p[i].y); 
+        std::sort(pp,pp+n_init);
+	    int uk=unique(pp,pp+n_init)-pp;
+	    for(int i=0;i<n_init;i++){
             tag[i]=lower_bound(pp,pp+uk,std::make_pair((int)p[i].x,(int)p[i].y))-pp;
         }
-	    n=uk;
-	    for(int i=0;i<n;i++){
+	    n_init=uk;
+	    for(int i=0;i<n_init;i++){
             p[i].x=pp[i].x,p[i].y=pp[i].y;
-            verts[i]={(Float)p[i].x,(Float)p[i].y};
+            verts[i]={(Float)pp[i].x,(Float)pp[i].y};
             pos[i]=i;
+            //std::cerr<<pp[i].x<<" "<<pp[i].y<<std::endl;
         }
-        std::sort(pos,pos+n,cmp);
+        std::sort(pos,pos+n_init,cmp);
         int i=1;
         D lst=p[pos[0]].x;
         swp=lst+1;
-        while(i<n&&abs(p[pos[i]].x-lst)<eps)
+        while(i<n_init&&abs(p[pos[i]].x-lst)<eps)
         {
             All.insert(pr(pos[i-1],pos[i]));
             //G[pos[i-1]].push_back(pos[i]);G[pos[i]].push_back(pos[i-1]);
             i++;
         }
         int s=i;
-        for(;i<n+1;i++)
+        for(;i<n_init+1;i++)
         {
 		    while(!event.empty())
             {
-                if((i^n)&&event.top().T>p[pos[i]].x+eps)break;
+                if((i^n_init)&&event.top().T>p[pos[i]].x+eps)break;
                 ev x=event.top();
                 event.pop();
                 swp=(x.T+lst)/2;
@@ -148,8 +160,9 @@ namespace Init{
                 trigs[num].v[0]=x.x;
                 trigs[num].v[1]=x.y;
                 trigs[num++].v[2]=x.z;
+                //std::cerr<<num<<" "<<x.x<<" "<<x.y<<" "<<x.z<<std::endl;
             }
-            if(i==n)break;
+            if(i==n_init)break;
             lst=swp=p[pos[i]].x,curx=p[pos[i]].y;
             std::set<pr>::iterator tmp=All.lower_bound(pr(-1,-1));
             if(tmp!=All.end()&&abs(tmp->get_y(swp)-curx)<eps)
@@ -184,6 +197,9 @@ namespace Init{
         }
 
         //Stylization::initializeWith(verts, n, trigs, num);
+        for(int i=0;i<n_init;i++){
+            //std::cerr<<p[i].x<<" "<<p[i].y<<std::endl;
+        }
     }
 
 }

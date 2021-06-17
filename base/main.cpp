@@ -2,6 +2,7 @@
 // 大家可以用它先看看效果。
 
 #include "data.hpp"
+#include "heads.hpp"
 #include "stylization.hpp"
 #include "Pretreatment.hpp"
 // 这个头文件需要安装OpenGL以及GLFW库，在Windows下需要特别配置
@@ -21,7 +22,7 @@ GLubyte img[1920*1280][3];
 
 struct _Tri {
     short a, b, c, v;
-} tri[500];
+} tri[50000];
 
 int main(int argc, char**argv)
 {
@@ -33,16 +34,28 @@ int main(int argc, char**argv)
     Data::loadImage(argv[1]);
 
 
-    Init::InitializeMain();
-    //Stylization::initializeSimple();
     //Init::InitializeMain();
+    //Stylization::initializeSimple();
+
+    Init::InitializeMain();
+    //std::cerr<<"oooops!"<<std::endl;
     for(int i=0;i<Init::num;i++){
         tri[i].a = Init::trigs[i].v[0];
         tri[i].b = Init::trigs[i].v[1];
         tri[i].c = Init::trigs[i].v[2];
+        Vector2 a, b, c;
+        a = Init::verts[tri[i].a];
+        b = Init::verts[tri[i].b];
+        c = Init::verts[tri[i].c];
+        if(cross(b-a, c-a) < 0) std::swap(tri[i].b, tri[i].c);
         tri[i].v = 0;
+        //std::cerr<<tri[i].a<<" "<<tri[i].b<<" "<<tri[i].c<<std::endl;
     }
-    Stylization::initializeWith(Init::verts, Init::n, (Stylization::Triangle*)tri, Init::num);
+    for(int i=0;i<Init::n_init;i++){
+        //std::cerr<<Init::verts[i].x<<" "<<Init::verts[i].y<<std::endl;
+    }
+    Stylization::initializeWith(Init::verts, Init::n_init, (Stylization::Triangle*)tri, Init::num);
+    
     GLFWwindow* window;
 
     /* Initialize the library */

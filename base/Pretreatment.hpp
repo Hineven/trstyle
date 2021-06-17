@@ -6,13 +6,13 @@
 #include "stylization.hpp"
 
 namespace Init{
-    int n;
-    int num;
-    Vector2 verts[100];
+    extern int n_init;
+    extern int num;
+    extern Vector2 verts[100];
     struct Triangle {
         short v[3], t;
     };
-    Triangle trigs[500];
+    extern Triangle trigs[500];
     void InitializeMain();
 
 }
