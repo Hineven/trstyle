@@ -1,6 +1,7 @@
 // 这是一个简单的Demo，展示了一下梯度下降模块的使用方法
 // 大家可以用它先看看效果。
-
+#include <stdio.h>
+#include <stdlib.h>
 #include "data.hpp"
 #include "heads.hpp"
 #include "stylization.hpp"
@@ -13,7 +14,7 @@
 #endif
 
 // 像素放大系数，如果用高分屏可以把这个东西开成2以上。
-const int display_scaler = 2;
+const int display_scaler = 1;
 
 GLubyte img[1920*1280][3];
 
@@ -77,7 +78,7 @@ int main(int argc, char**argv)
 
 
     int iters = 0;
-    int max_iters = 10000;
+    int max_iters = 100;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -111,6 +112,23 @@ int main(int argc, char**argv)
         //sleep(1);
 
     }
+
+    int l=(Data::image_width*3+3)/4*4;
+    int bmi[]= {l*Data::image_height+54,0,54,40,Data::image_width,Data::image_height,1|3*8<<16,0,l*Data::image_height,0,0,100,0};
+    FILE *fp = fopen("test.bmp","wb");
+    fprintf(fp,"BM");
+    fwrite(&bmi,52,1,fp);
+    char img1[Data::image_height*Data::image_width*3];
+    int num = 0;
+    for(int i = 0; i<Data::image_width; i++)
+        for(int j = 0; j<Data::image_height; j++) {
+            img1[num++] = img[i*Data::image_width+j][2];
+            img1[num++] = img[i*Data::image_width+j][1];
+            img1[num++] = img[i*Data::image_width+j][0];
+    }
+    fwrite(img1,1,l*Data::image_height,fp);
+    fclose(fp);
+    //system("test.bmp");
     getchar();
     getchar();
     getchar();
