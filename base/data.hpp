@@ -53,7 +53,7 @@ constexpr Float h = 2e-1;
 
 // 梯度下降的最大单次移动距离（单位是像素），防止梯度爆炸引起的瞬移
 // Maximum stepsize for gradient descent
-constexpr Float smax = 1.5;
+constexpr Float smax = 4.5;
 
 // lambda，意义和论文中相同，由于我们这里色彩没有归一化，所以相对论文的参考值会大很多
 // laaaaaaaambda (amplifier of the restriction factor, refer to

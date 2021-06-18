@@ -40,6 +40,7 @@ int main(int argc, char**argv)
     //Init::InitializeMain();
     //Stylization::initializeSimple();
 
+if(n_vertices > 4) {
     Init::InitializeMain(n_vertices);
     //std::cerr<<"oooops!"<<std::endl;
     for(int i=0;i<Init::num;i++){
@@ -58,9 +59,9 @@ int main(int argc, char**argv)
         //std::cerr<<Init::verts[i].x<<" "<<Init::verts[i].y<<std::endl;
     }
     Stylization::initializeWith(Init::verts, Init::n_init, (Stylization::Triangle*)tri, Init::num);
-    
+}
+else Stylization::initializeSimple();
     GLFWwindow* window;
-
     /* Initialize the library */
     if (!glfwInit())
         return 0;
@@ -82,7 +83,7 @@ int main(int argc, char**argv)
 
 
     int iters = 0;
-    int max_iters = 100;
+    int max_iters = 10000;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
         ++iters;

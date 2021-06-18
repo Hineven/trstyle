@@ -718,15 +718,12 @@ namespace Stylization {
             else // Only through collapsing can a vertice become a border vertice
                 vertices[i] = Data::clampInside(vertices[i]-det);
         }
-        //
         delete [] grad;
         maintainTriangulation(_negative_area_triangle);
-        //
         if(n_iters <= 1 || shouldAdvance()) 
             maintainTriangulation(F_OPER_SPLIT);
         if(n_iters%Data::flip_interval == 0) 
             maintainTriangulation(F_OPER_FLIP);
-        //
         n_iters ++;
         printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
         printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
