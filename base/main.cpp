@@ -7,6 +7,8 @@
 #include "stylization.hpp"
 #include "Pretreatment.hpp"
 // 这个头文件需要安装OpenGL以及GLFW库，在Windows下需要特别配置
+#include <GL/glew.h>
+#include <GL/glut.h>
 #include <GLFW/glfw3.h>
 // 调试用的
 #ifndef _WIN32
@@ -80,8 +82,7 @@ int main(int argc, char**argv)
     int iters = 0;
     int max_iters = 100;
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         ++iters;
         if(iters > max_iters) break ;
         Stylization::iterate();

@@ -93,9 +93,10 @@ void render (Vector2 a, Vector2 b, Vector2 c, Float * buffer) {
 
 
 // Render the triangle, later calculate the energy of a certain triangle
-// ifrender tells if the render function should render the triangle to
+// if render tells if the render function should render the triangle to
 // the output buffer. Otherwise it will use the buffer for calculation.
 // This procedure should be executed on GPU for further acceleration
+
 Float energy (Vector2 a, Vector2 b, Vector2 c, bool ifrender, Float * buffer) {
     if(!ifrender && !buffer) fatal("Proper parameters needed.");
     if(buffer == nullptr) buffer = Data::image_output;

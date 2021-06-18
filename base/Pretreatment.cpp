@@ -103,11 +103,11 @@ namespace Init{
         std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
         n_init=1500;
         int xxx,yyy;
-        /*n_init = 5; 
+        /*n_init = 5;
         xxx=Data::image_width / 2;
         yyy=Data::image_height / 2;
         verts[4]={(Float)xxx,(Float)yyy};
-    //std::cerr<<i<<" "<<n_init<<std::endl; 
+    //std::cerr<<i<<" "<<n_init<<std::endl;
         p[4].x=xxx;p[4].y=yyy;*/
         for(int i=4;i<n_init;i++){//随机撒点
             xxx=(std::rand()%(Data::image_width));
@@ -117,14 +117,12 @@ namespace Init{
             p[i].x=xxx;
             p[i].y=yyy;
         }
-        
         for(int i=0;i<n_init;i++)pp[i]=std::make_pair((int)p[i].x,(int)p[i].y); 
-        std::sort(pp,pp+n_init);//排序
+        std::sort(pp,pp+n_init);
 	    int uk=unique(pp,pp+n_init)-pp;
-	    for(int i=0;i<n_init;i++){//去重
+	    for(int i=0;i<n_init;i++){
             tag[i]=lower_bound(pp,pp+uk,std::make_pair((int)p[i].x,(int)p[i].y))-pp;
         }
-
 	    n_init=uk;
 	    for(int i=0;i<n_init;i++){
             p[i].x=pp[i].x,p[i].y=pp[i].y;
@@ -136,9 +134,6 @@ namespace Init{
         int i=1;
         D lst=p[pos[0]].x;
         swp=lst+1;
-        for(int i=0;i<n_init;i++){
-            //std::cerr<<p[i].x<<" "<<p[i].y<<std::endl;
-        }
         while(i<n_init&&abs(p[pos[i]].x-lst)<eps)
         {
             All.insert(pr(pos[i-1],pos[i]));

@@ -64,7 +64,7 @@ constexpr Float lambda = 1;
 // 为0表示任何三角形都能被分裂
 // Triangle split threshold
 // The triangle will NOT split if its energy is lower than this value
-constexpr Float split_energy_lower_threshold = 0;
+constexpr Float split_energy_lower_threshold = 1000;
 
 // 挑选三角形进行分裂时，这个值越大，那么越偏爱优先分裂总能量
 // 更大的三角形，否然更偏爱分裂能量密度更大的三角形
@@ -75,7 +75,7 @@ constexpr Float split_balance_factor = 0;
 
 // 当三角形面积小于这个值时，这个三角形可以被坍缩
 // Minimum area of a triangle, smaller triangles will be collapsed
-constexpr Float collapse_area_threshold = 20;
+constexpr Float collapse_area_threshold = 50;
 
 // 用于判断坍缩是否使用边坍缩的方法
 // 如果最短边长度小于这么多像素，才可能使用边坍缩的方法
