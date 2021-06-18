@@ -13,7 +13,7 @@ namespace Init{
         short v[3], t;
     };
     extern Triangle trigs[500];
-    void InitializeMain();
+    void InitializeMain(int _n_init);
 
 }
 

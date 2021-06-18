@@ -29,16 +29,18 @@ int main(int argc, char**argv)
 {
     srand(10000);
 
-    if(argc < 2) fatal("Useage: style <PNG file name> [maximum energy density] [maximum triangles]");
+    if(argc < 2) fatal("Useage: style <PNG file name> [maximum energy density] [maximum triangles] [initial vertices]");
     if(argc >= 3) sscanf(argv[2], "%f", &Data::split_density_threshold);
     if(argc >= 4) sscanf(argv[3], "%d", &Data::max_triangles);
+    int n_vertices = 50;
+    if(argc >= 4) sscanf(argv[4], "%d", &n_vertices);
     Data::loadImage(argv[1]);
 
 
     //Init::InitializeMain();
     //Stylization::initializeSimple();
 
-    Init::InitializeMain();
+    Init::InitializeMain(n_vertices);
     //std::cerr<<"oooops!"<<std::endl;
     for(int i=0;i<Init::num;i++){
         tri[i].a = Init::trigs[i].v[0];

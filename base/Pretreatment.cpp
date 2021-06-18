@@ -12,7 +12,7 @@
 
 namespace Init{
     constexpr double eps =  1e-10;
-    constexpr int N=200050;
+    constexpr int N=20000;
     struct point
     {
         D x,y;
@@ -89,7 +89,7 @@ namespace Init{
     Vector2 verts[N];
     Triangle trigs[N];
     int num;
-    void InitializeMain(){
+    void InitializeMain(int _n_init){
         srand(time(0));
         num=0;
         verts[0] = {0, 0};
@@ -101,7 +101,7 @@ namespace Init{
         p[2].x=Data::image_width;p[2].y=Data::image_height;
         p[3].x=0;p[3].y=Data::image_height;
         std::cerr<<Data::image_width<<" "<<Data::image_height<<std::endl;
-        n_init=1500;
+        n_init=_n_init;
         int xxx,yyy;
         /*n_init = 5;
         xxx=Data::image_width / 2;
