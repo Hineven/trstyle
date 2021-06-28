@@ -13,15 +13,10 @@
 * 
 * 
 *
-2、代码  
-`<hello world>`  
-3、代码块高亮  
 ```
-@Override
-protected void onDestroy() {
-    EventBus.getDefault().unregister(this);
-    super.onDestroy();
-}
+cd base
+sudo apt search glfw
+sudo apt install libglfw3 libglfw3-dev
 ``` 
 ![image](https://user-images.githubusercontent.com/57523722/123102510-b64aaf80-d467-11eb-94f6-5d0d529a9a20.png)
 
