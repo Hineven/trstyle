@@ -10,77 +10,15 @@
 * 在ubuntu环境下编译运行
 * 需要安装glfw和libpng库
 * 
-* 
-* 
-*
+* 在终端中如下输入
 ```
 cd base
-sudo apt search glfw
+sudo apt install libpng++-dev
 sudo apt install libglfw3 libglfw3-dev
+make
+./style pic/dong.png
 ``` 
+*效果展示
+
 ![image](https://user-images.githubusercontent.com/57523722/123102510-b64aaf80-d467-11eb-94f6-5d0d529a9a20.png)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 * 真的没了。真的。
